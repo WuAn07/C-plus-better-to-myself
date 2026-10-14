@@ -1,118 +1,54 @@
 #include<iostream>
-#include<cassert>
-#include<algorithm>
+
+
 using namespace std;
 
 
 template<class element>
 struct node
 {
-element data;
-node* next;
+    element data;
+    node* next;
+    node* pre;
+    int depth=0;//频度域
 };
-// 前向声明类模板
-template <typename element> class Linklist;
 
-// 前向声明函数模板
-template <typename element>
-Linklist<element> fun3(Linklist<element> &l1, Linklist<element> &l2);
-
-template<class element>
-class Linklist
+template <class element>
+class Dlinklist
 {
 public:
-Linklist();//构造
-Linklist(element a[],int n);//必须要求a是从0位置开始存放的
-~Linklist();
-size_t get_length();//求链表长度
-element get_data(size_t n);//得到第n个元素
-node<element>* get_point(size_t i);//返回第i个元素的指针
-void push_back(element d);//尾插
-void push_front(element d);//头插
-void insert(size_t n,element d);//按位插入
-element find(size_t i);//按位查找
-size_t find(element d);//按值查找
-element erase(size_t n);//按位删除
-size_t erase(element d);//按值删除
-void print_list();//打印链表
-Linklist fun2();//实现规定的重排列
-friend Linklist<element> fun3<element>(Linklist<element> &l1,Linklist<element> &l2);//实现题目3的要求
-private:
-node<element> *head;
-size_t count;
-};
-
-template<class element>
-Linklist<element>::Linklist()
+Dlinklist()
 {
-    head=new node<element>;
-    count=0;
-    head->next=nullptr;
+    node<element>* h=new node<element>;
+    h->next=nullptr;
+    h->pre=nullptr;
 }
-
-template<class element>
-Linklist<element>::Linklist(element a[],int n)
+Dlinklist(element a[],int n)
 {
-    head=new node<element>;
-    head->next=nullptr;
-    count=(size_t)n;
+    node<element>* h=new node<element>;
+    h->next=nullptr;
+    h->pre=nullptr;
     for(int i=n-1;i>=0;--i)//从a的最后一个开始头插进去，使得链表中的元素与a中的元素顺序一样
     {
         node<element> *p=new node<element>;
         p->data=a[i];
-        p->next=head->next;
-        head->next=p;
+        p->next=h->next;
+        p->next->pre=p;
+        h->next=p;
+        p->pre=h;
     }
 }
-
-template<class element>
-Linklist<element>::~Linklist()
+~Dlinklist()
 {
-    for(size_t i=1;i<=count;++i)
+    node<element>*p=head;
+    while(p)
     {
-       node<element>*p= head->next;
-       head->next=p->next;
-       delete p;
+        node<element>*tmp=p->next;
+        delete p;
+        p=tmp;
     }
-    delete head;//删除头指针不能忘记
 }
-
-template<class element>
-size_t Linklist<element>::get_length()
-{
-    return count;
-}
-
-template<class element>
-element Linklist<element>::get_data(size_t n)
-{
-    assert(n<=count);
-    element re;
-    node<element> *p=head->next;
-    for(size_t i=0;i<n-1;++i)
-    {
-       p=p->next;
-    }
-   re=p->data;
-   return re;
-}
-
-template<class element>
-node<element>* Linklist<element>::get_point(size_t i)//按位返回地址
-{
-    assert(i<=count&&i>=1);
-    node<element> *p=head;
-    size_t j=1;
-    while(p&&j<=i)
-    {
-        j++;
-        p=p->next;
-    }
-    return p;
-}
-
-template<class element>
-void Linklist<element>::push_back(element d)
+void push_back(element d)
 {
     count++;
     node<element>*x=new node<element>;
@@ -122,231 +58,471 @@ void Linklist<element>::push_back(element d)
         p=p->next;
     }
     p->next=x;
+    x->pre=p;
     x->next=nullptr;
     x->data=d;
+
 }
-
-
-template<class element>
-void Linklist<element>::insert(size_t n,element d)//n指的是第n个元素，插入的是第n个元素的位置
+void print_list()
 {
-    assert(n<=count+1&&n>0);
-
-    node<element> *p;
-    p=head;
-    size_t j=1;
-    while(p&&j<=n-1)//工作指针要算到第n个元素的前面
-    {
-        j++;
-        p=p->next;
-    }
-    node<element> *q=new node<element>;
-    q->next=p->next;
-    q->data=d;
-    p->next=q;
-    count++;
     
-}
-
-
-
-template<class element>
-element Linklist<element>::erase(size_t n)//按位删除,n指的是第n个元素，应当大于1
-{
-    assert(n<=count&&n>=1);
-    node<element> *p=head;
-    
-    size_t m=1;
-    while(p&&m<=n-1)//工作指针依然要算到第n个元素的前面
-    {
-        p=p->next;
-        ++m;
-    }
-    node<element> *q=p->next;
-    element re=q->data;
-    p->next=q->next;
-    delete q;
-    count--;
-    return re;
-}
-
-template<class element>
-element Linklist<element>::find(size_t i)//按位查找
-{
-    assert(i<=count&&i>=1);
-    node<element> *p=head->next;
-    size_t j=1;
-    while(p&&j<i)
-    {
-        j++;
-        p=p->next;
-    }
-    return p->data;
-}
-
-template<class element>
-size_t Linklist<element>::find(element d)//按值查找,返回0代表找不到
-{
-    assert(count>=1);//排除空表情况
-    node<element> *p=head->next;
-    size_t cnt=1;
-    while(p)
-    {
-        if(p->data==d)
-            return cnt;
-        cnt++;
-        p=p->next;
-       
-    }
-   return 0;
-}
-template<class element>
-size_t Linklist<element>::erase(element d)//按值删除,返回的应当是该元素的位次，大于等于1才对
-{
-
-    size_t n=find(d);
-    if(n==0)return 0;
-     node<element>*p;
-    if(n==1)p=head;
-    else p=get_point(n-1);//p是要删除的上一个元素的指针
-    node<element> *tmp=p->next;
-    p->next=tmp->next;
-    delete tmp;
-    count--;//表长-1不能忘了，这破错误调了好久啊
-    return n;
-}
-
-template<class element>
-void Linklist<element>::print_list()
-{
     node<element>*p=head->next;
     if(p==nullptr)
     {
         cout<<"空链表"<<endl;
         return ;
     }
+    cout<<p->data<<"->";
+    p=p->next;
     while(p->next!=nullptr)
     {
-            cout<<p->data<<"->";
+            cout<<"<-"<<p->data<<"->";
             p=p->next;
     }
     cout<<p->data<<endl;
 }
 
-template<class element>
-void Linklist<element>::push_front(element d)
+node<element>* find(element d)
 {
-    count++;
-    node<element>*x=new node<element>;
-    x->next=head->next;
-    x->data=d;
-    head->next=x;
-}
-template<class element>
-Linklist<element> Linklist<element>::fun2()//实现规定的重排列
-{
-    Linklist<element> tmp;
-    node<element> *p=head->next;
+    node<element>*p=head->next;
     while(p)
     {
-        tmp.push_front(p->data);//将原链表元素头插进临时链表实现倒序存放
+        if(p->data==d)//但遇到重复的元素要怎么办?
+            //这样写只能遇到第一次遍历到的元素
+            //或许可以再遍历一遍,把重复的元素单独处理出来,只要搜索这个元素了就直接把多个指针往前移?但这也太臃肿了吧
+            //额,所以先找到者先优先吧
+        {
+            p->depth++;//实现频度域＋1
+            //接下来实现重排操作,只需要比较当前节点的频度域与前一个节点的频度域即可
+            //直到小于或者到头节点就停止
+            while(p->pre!=head && p->depth>p->pre->depth)
+            {
+                node<element>*tmp=p->pre;
+                p->pre->next=p->next;
+                if(p->next!=nullptr)
+                {
+                    p->next->pre=p->pre;
+                }
+                p->next=tmp;
+                p->pre=tmp->pre;
+                tmp->pre->next=p;
+                tmp->pre=p;
+            }
+            return p;
+        }
         p=p->next;
     }
-     Linklist<element> re;
-     size_t cnt=count/2;
-     node<element> *p1=head->next;
-     node<element> *p2=tmp.head->next;
-     while(cnt>0)
-     {
-        cnt--;
-        re.push_back(p1->data);
-        re.push_back(p2->data);
-        p1=p1->next;
-        p2=p2->next;
-     }
-     if(count%2==1)//如果是奇数个元素的话，最后还要加上中间的那个元素
-     {
-        re.push_back(p1->data);
-     }
-     return re;
+    return nullptr;
 }
-template<class element>
-Linklist<element> fun3(Linklist<element> &l1,Linklist<element> &l2)//实现题目3的要求
-{
-    Linklist<element> re;
-    //node<element> *work=re.head->next;
-    node<element> *p1=l1.head->next;
-    node<element> *p2=l2.head->next;
-    //因为l1与l2是递增的,要实现re的递减最简单方法就是头插实现倒序插入
-    while(p1||p2)
-    {
 
-        //l1与l2都没存完的情况
-         if(p1&&p2)
-         {
-          if(p1->data<p2->data)
-          {
-                node<element> *tmp=p1->next;
-                re.count++;
-                p1->next=re.head->next;
-                re.head->next=p1;
-                p1=tmp;
-          }
-          else
-          {
-                node<element> *tmp=p2->next;
-                re.count++;
-                p2->next=re.head->next;
-                re.head->next=p2;
-                p2=tmp;
-          }
-         }
-        //判断哪个先存完了
-       if(p1==nullptr&&p2!=nullptr)
-       {
-        node<element> *tmp=p2->next;
-        re.count++;
-        p2->next=re.head->next;
-        re.head->next=p2;
-        p2=tmp;
-       }
-       if(p2==nullptr&&p1!=nullptr)
-       {
-        node<element> *tmp=p1->next;
-        re.count++;
-        p1->next=re.head->next;
-        re.head->next=p1;
-        p1=tmp;
-       }
-       
+private:
+    node<element>* head;
+    size_t count;
+};
 
-    }
-    return re;
-}
 int main()
 {
-    int m,n;
-    cout<<"分别输入两个链表的长度："<<endl;
-    cin>>m>>n;
-    Linklist<int>l1,l2;
-    cout<<"分别输入两个链表的元素(为了方便检查,递增输入吧)："<<endl;
-    for(int i=0;i<m;i++)
-    {
-        int tmp;
-        cin>>tmp;
-        l1.push_back(tmp);
-    }   
+    Dlinklist<int> l1;
+    int n;
+    cout<<"请输入链表的长度："<<endl;
+    cin>>n;
+    cout<<"请输入链表的元素："<<endl;
     for(int i=0;i<n;i++)
     {
         int tmp;
         cin>>tmp;
-        l2.push_back(tmp);
+        l1.push_back(tmp);
     }
-    Linklist<int>l3=fun3(l1,l2);
-    cout<<"合并后的链表为："<<endl;
-    l3.print_list();
+    cout<<"初始链表为："<<endl;
+    l1.print_list();
+    cout<<"输入要查找的次数："<<endl;
+    int m;
+    cin>>m;
+    cout<<"请输入要查找的元素："<<endl;
+    for(int i=0;i<m;i++)
+    {
+        int tmp;
+        cin>>tmp;
+        node<int>*p=l1.find(tmp);
+        if(p==nullptr)
+        {
+            cout<<"没有找到"<<endl;
+            if(i!=m-1)
+            {
+                cout<<"请继续输入要查找的元素："<<endl;
+            }
+        }
+        else
+        {
+            cout<<"找到了，当前频度域为："<<p->depth<<"指针为:"<<p<<endl;
+            l1.print_list();
+            if(i!=m-1)
+            {
+                cout<<"请继续输入要查找的元素："<<endl;
+            }
+        }
+    }
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+// #include<iostream>
+// #include<cassert>
+// #include<algorithm>
+// using namespace std;
+
+
+// template<class element>
+// struct node
+// {
+// element data;
+// node* next;
+// };
+// // 前向声明类模板
+// template <typename element> class Linklist;
+
+// // 前向声明函数模板
+// template <typename element>
+// Linklist<element> fun3(Linklist<element> &l1, Linklist<element> &l2);
+
+// template<class element>
+// class Linklist
+// {
+// public:
+// Linklist();//构造
+// Linklist(element a[],int n);//必须要求a是从0位置开始存放的
+// ~Linklist();
+// size_t get_length();//求链表长度
+// element get_data(size_t n);//得到第n个元素
+// node<element>* get_point(size_t i);//返回第i个元素的指针
+// void push_back(element d);//尾插
+// void push_front(element d);//头插
+// void insert(size_t n,element d);//按位插入
+// element find(size_t i);//按位查找
+// size_t find(element d);//按值查找
+// element erase(size_t n);//按位删除
+// size_t erase(element d);//按值删除
+// void print_list();//打印链表
+// Linklist fun2();//实现规定的重排列
+// friend Linklist<element> fun3<element>(Linklist<element> &l1,Linklist<element> &l2);//实现题目3的要求
+// private:
+// node<element> *head;
+// size_t count;
+// };
+
+// template<class element>
+// Linklist<element>::Linklist()
+// {
+//     head=new node<element>;
+//     count=0;
+//     head->next=nullptr;
+// }
+
+// template<class element>
+// Linklist<element>::Linklist(element a[],int n)
+// {
+//     head=new node<element>;
+//     head->next=nullptr;
+//     count=(size_t)n;
+//     for(int i=n-1;i>=0;--i)//从a的最后一个开始头插进去，使得链表中的元素与a中的元素顺序一样
+//     {
+//         node<element> *p=new node<element>;
+//         p->data=a[i];
+//         p->next=head->next;
+//         head->next=p;
+//     }
+// }
+
+// template<class element>
+// Linklist<element>::~Linklist()
+// {
+//     for(size_t i=1;i<=count;++i)
+//     {
+//        node<element>*p= head->next;
+//        head->next=p->next;
+//        delete p;
+//     }
+//     delete head;//删除头指针不能忘记
+// }
+
+// template<class element>
+// size_t Linklist<element>::get_length()
+// {
+//     return count;
+// }
+
+// template<class element>
+// element Linklist<element>::get_data(size_t n)
+// {
+//     assert(n<=count);
+//     element re;
+//     node<element> *p=head->next;
+//     for(size_t i=0;i<n-1;++i)
+//     {
+//        p=p->next;
+//     }
+//    re=p->data;
+//    return re;
+// }
+
+// template<class element>
+// node<element>* Linklist<element>::get_point(size_t i)//按位返回地址
+// {
+//     assert(i<=count&&i>=1);
+//     node<element> *p=head;
+//     size_t j=1;
+//     while(p&&j<=i)
+//     {
+//         j++;
+//         p=p->next;
+//     }
+//     return p;
+// }
+
+// template<class element>
+// void Linklist<element>::push_back(element d)
+// {
+//     count++;
+//     node<element>*x=new node<element>;
+//     node<element> *p=head;
+//     while(p->next!=nullptr)
+//     {
+//         p=p->next;
+//     }
+//     p->next=x;
+//     x->next=nullptr;
+//     x->data=d;
+// }
+
+
+// template<class element>
+// void Linklist<element>::insert(size_t n,element d)//n指的是第n个元素，插入的是第n个元素的位置
+// {
+//     assert(n<=count+1&&n>0);
+
+//     node<element> *p;
+//     p=head;
+//     size_t j=1;
+//     while(p&&j<=n-1)//工作指针要算到第n个元素的前面
+//     {
+//         j++;
+//         p=p->next;
+//     }
+//     node<element> *q=new node<element>;
+//     q->next=p->next;
+//     q->data=d;
+//     p->next=q;
+//     count++;
+    
+// }
+
+
+
+// template<class element>
+// element Linklist<element>::erase(size_t n)//按位删除,n指的是第n个元素，应当大于1
+// {
+//     assert(n<=count&&n>=1);
+//     node<element> *p=head;
+    
+//     size_t m=1;
+//     while(p&&m<=n-1)//工作指针依然要算到第n个元素的前面
+//     {
+//         p=p->next;
+//         ++m;
+//     }
+//     node<element> *q=p->next;
+//     element re=q->data;
+//     p->next=q->next;
+//     delete q;
+//     count--;
+//     return re;
+// }
+
+// template<class element>
+// element Linklist<element>::find(size_t i)//按位查找
+// {
+//     assert(i<=count&&i>=1);
+//     node<element> *p=head->next;
+//     size_t j=1;
+//     while(p&&j<i)
+//     {
+//         j++;
+//         p=p->next;
+//     }
+//     return p->data;
+// }
+
+// template<class element>
+// size_t Linklist<element>::find(element d)//按值查找,返回0代表找不到
+// {
+//     assert(count>=1);//排除空表情况
+//     node<element> *p=head->next;
+//     size_t cnt=1;
+//     while(p)
+//     {
+//         if(p->data==d)
+//             return cnt;
+//         cnt++;
+//         p=p->next;
+       
+//     }
+//    return 0;
+// }
+// template<class element>
+// size_t Linklist<element>::erase(element d)//按值删除,返回的应当是该元素的位次，大于等于1才对
+// {
+
+//     size_t n=find(d);
+//     if(n==0)return 0;
+//      node<element>*p;
+//     if(n==1)p=head;
+//     else p=get_point(n-1);//p是要删除的上一个元素的指针
+//     node<element> *tmp=p->next;
+//     p->next=tmp->next;
+//     delete tmp;
+//     count--;//表长-1不能忘了，这破错误调了好久啊
+//     return n;
+// }
+
+// template<class element>
+// void Linklist<element>::print_list()
+// {
+//     node<element>*p=head->next;
+//     if(p==nullptr)
+//     {
+//         cout<<"空链表"<<endl;
+//         return ;
+//     }
+//     while(p->next!=nullptr)
+//     {
+//             cout<<p->data<<"->";
+//             p=p->next;
+//     }
+//     cout<<p->data<<endl;
+// }
+
+// template<class element>
+// void Linklist<element>::push_front(element d)
+// {
+//     count++;
+//     node<element>*x=new node<element>;
+//     x->next=head->next;
+//     x->data=d;
+//     head->next=x;
+// }
+// template<class element>
+// Linklist<element> Linklist<element>::fun2()//实现规定的重排列
+// {
+//     Linklist<element> tmp;
+//     node<element> *p=head->next;
+//     while(p)
+//     {
+//         tmp.push_front(p->data);//将原链表元素头插进临时链表实现倒序存放
+//         p=p->next;
+//     }
+//      Linklist<element> re;
+//      size_t cnt=count/2;
+//      node<element> *p1=head->next;
+//      node<element> *p2=tmp.head->next;
+//      while(cnt>0)
+//      {
+//         cnt--;
+//         re.push_back(p1->data);
+//         re.push_back(p2->data);
+//         p1=p1->next;
+//         p2=p2->next;
+//      }
+//      if(count%2==1)//如果是奇数个元素的话，最后还要加上中间的那个元素
+//      {
+//         re.push_back(p1->data);
+//      }
+//      return re;
+// }
+// template<class element>
+// Linklist<element> fun3(Linklist<element> &l1,Linklist<element> &l2)//实现题目3的要求
+// {
+//     Linklist<element> re;
+//     //node<element> *work=re.head->next;
+//     node<element> *p1=l1.head->next;
+//     node<element> *p2=l2.head->next;
+//     //因为l1与l2是递增的,要实现re的递减最简单方法就是头插实现倒序插入
+//     while(p1||p2)
+//     {
+
+//         //l1与l2都没存完的情况
+//          if(p1&&p2)
+//          {
+//           if(p1->data<p2->data)
+//           {
+//                 node<element> *tmp=p1->next;
+//                 re.count++;
+//                 p1->next=re.head->next;
+//                 re.head->next=p1;
+//                 p1=tmp;
+//           }
+//           else
+//           {
+//                 node<element> *tmp=p2->next;
+//                 re.count++;
+//                 p2->next=re.head->next;
+//                 re.head->next=p2;
+//                 p2=tmp;
+//           }
+//          }
+//         //判断哪个先存完了
+//        if(p1==nullptr&&p2!=nullptr)
+//        {
+//         node<element> *tmp=p2->next;
+//         re.count++;
+//         p2->next=re.head->next;
+//         re.head->next=p2;
+//         p2=tmp;
+//        }
+//        if(p2==nullptr&&p1!=nullptr)
+//        {
+//         node<element> *tmp=p1->next;
+//         re.count++;
+//         p1->next=re.head->next;
+//         re.head->next=p1;
+//         p1=tmp;
+//        }
+       
+
+//     }
+//     return re;
+// }
+// int main()
+// {
+//     int m,n;
+//     cout<<"分别输入两个链表的长度："<<endl;
+//     cin>>m>>n;
+//     Linklist<int>l1,l2;
+//     cout<<"分别输入两个链表的元素(为了方便检查,递增输入吧)："<<endl;
+//     for(int i=0;i<m;i++)
+//     {
+//         int tmp;
+//         cin>>tmp;
+//         l1.push_back(tmp);
+//     }   
+//     for(int i=0;i<n;i++)
+//     {
+//         int tmp;
+//         cin>>tmp;
+//         l2.push_back(tmp);
+//     }
+//     Linklist<int>l3=fun3(l1,l2);
+//     cout<<"合并后的链表为："<<endl;
+//     l3.print_list();
+//     return 0;
+// }
 // void fun(int num[],int n)
 // {
 //   int work=0,end=n-1;
