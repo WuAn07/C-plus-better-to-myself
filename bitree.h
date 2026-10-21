@@ -10,7 +10,7 @@ template <typename element>
 class bitree_node
 {
 public:
-    bitree_node(element x ,bitree_node<element> *l=nullptr,bitree_node<element> *r=nullptr)
+    bitree_node(const element& x ,bitree_node<element> *l=nullptr,bitree_node<element> *r=nullptr)
     {
         data=x;
         lchild=l;
@@ -26,15 +26,17 @@ class bitree
 {
 public:
     bitree();//无参构造函数
-    bitree(const bitree<element>&);//拷贝构造函数,先把遍历什么的写了再补充吧
+     bitree(const bitree<element>&)=delete;//拷贝构造函数,先把遍历什么的写了再补充吧
+     bitree& operator=(const bitree<element>&)=delete;//赋值构造重载
     ~bitree();//析构函数,同上.......
+    bitree_node<element>* get_root() { return root; }
     int get_height(bitree_node<element>* _root);//递归获取树的高度
     int get_size();//获取树的节点数
     bool empty();//判空
     void clear(bitree_node<element>* _root);//递归形式的清空
-    void set_root(bitree_node<element>* node);//设置根节点
-    void insert_lchild(bitree_node<element>* parent,bitree_node<element>* child);//插入左孩子,前父节点,后子节点
-    void insert_rchild(bitree_node<element>* parent,bitree_node<element>* child);//插入右孩子
+    void set_root(const element& x);//设置根节点
+    bool insert_lchild(const element& parent,const element& child);//插入左孩子,前父节点,后子节点
+    bool insert_rchild(const element& parent,const element& child);//插入右孩子
     void preorder(bitree_node<element>* _root);//先序遍历
     void inorder(bitree_node<element>* _root);//中序遍历
     void postorder(bitree_node<element>* _root);//后序遍历
@@ -100,33 +102,49 @@ void bitree<element>::clear(bitree_node<element>* _root)
 }
 
 template <typename element>
-void bitree<element>::set_root(bitree_node<element>* node)
+void bitree<element>::set_root(const element& x)
 {
-    if(node==root)return ;
-    clear();
-    root=node;
+    
+    clear(root);
+    root=new bitree_node<element>(x);//用new建立节点而不是直接在外面创建
     size=1;
     height=1;
 }
 
 template <typename element>
-void bitree<element>::insert_lchild(bitree_node<element>* parent,bitree_node<element>* child)
+bool bitree<element>::insert_lchild(const element& parent,const element& child)
 {
-    assert(parent!=nullptr);
-    assert(parent->lchild==nullptr);
-    parent->lchild=child;
+    // assert(parent!=nullptr);
+    // assert(parent->lchild==nullptr);
+    // parent->lchild=child;
+    // size++;
+    // height = get_height(root); 
+    //如果是按照节点来建树,会方便很多,直接对节点加入左右子树即可
+    //但这样做的话接口也暴露在外面了,容易出bug
+    bitree_node<element>* p=find(root,parent);
+    if(!p||p->lchild)return false;
+    p->lchild=new bitree_node<element>(child);
     size++;
-    height = get_height(root); 
+    height=get_height(root);
+    return true;
+
 }
 
 template <typename element>
-void bitree<element>::insert_rchild(bitree_node<element>* parent,bitree_node<element>* child)
+bool bitree<element>::insert_rchild(const element& parent,const element& child)
 {
-    assert(parent!=nullptr);
-    assert(parent->rchild==nullptr);
-    parent->rchild=child;
+    // assert(parent!=nullptr);
+    // assert(parent->rchild==nullptr);
+    // parent->rchild=child;
+    // size++;
+    // height = get_height(root); 
+    bitree_node<element>* p=find(root,parent);
+    if(!p||p->rchild)return false;
+    p->rchild=new bitree_node<element>(child);
     size++;
-    height = get_height(root); 
+    height=get_height(root);
+    return true;
+
 }
 
 template <typename element>
@@ -171,7 +189,7 @@ void bitree<element>::levelorder(bitree_node<element>* _root)
         return;
      }
      
-     bitree_node<element>* q =new bitree_node<element>*[size];
+     bitree_node<element>** q =new bitree_node<element>*[size];
      int front=0,rear=0;
      q[rear++]=_root;
      while(front<rear)
@@ -196,7 +214,7 @@ void bitree<element>:: order_leaves(bitree_node<element>* _root)
         cout<<"空树"<<endl;
         return ;
     }
-    bitree_node<element>* q = new bitree_node<element>*[size];
+    bitree_node<element>** q = new bitree_node<element>*[size];
      int front=0,rear=0;
      q[rear++]=_root;
      while(front<rear)
@@ -217,14 +235,14 @@ void bitree<element>:: order_leaves(bitree_node<element>* _root)
 template<class element>
  void bitree<element>::no_dfs_preorder(bitree_node<element>* _root)//非递归遍历
  {
-    bitree_node<element>* s=new bitree_node<element>* [size];
+    if(!_root)return;
+    bitree_node<element>** s=new bitree_node<element>* [size];
     int top=0;
     s[top++]=_root;
-    while(top&&s[top])
+    while(top>0)
     {
-        bitree_node<element>* tmp=s[top];
-        cout<<s[top]->data<<" ";
-        top--;
+        bitree_node<element>* tmp=s[--top];
+        cout<<tmp->data<<" ";
          if(tmp->rchild)
         {
             s[top++]=tmp->rchild;
@@ -248,8 +266,9 @@ bitree_node<element>* bitree<element>::find(bitree_node<element>* _root,element 
     }
     else{
         if(_root->data==target)return _root;
-        find(_root->lchild,target);
-        find(_root->rchild,target);
+        bitree_node<element>* re=find(_root->lchild,target);
+        if(re)return re;
+        return find(_root->rchild,target);
     }
 }
 #endif
